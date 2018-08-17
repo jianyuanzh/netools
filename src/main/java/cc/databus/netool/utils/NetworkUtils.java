@@ -1,10 +1,8 @@
 package cc.databus.netool.utils;
 
-import org.pcap4j.core.PcapAddress;
-import org.pcap4j.core.PcapNativeException;
-import org.pcap4j.core.PcapNetworkInterface;
-import org.pcap4j.core.Pcaps;
+import org.pcap4j.core.*;
 import org.pcap4j.util.LinkLayerAddress;
+import org.pcap4j.util.MacAddress;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -13,15 +11,6 @@ import java.util.List;
 import java.util.Objects;
 
 public class NetworkUtils {
-
-    public static String getInterfaceByRemoteHost(String hostname) throws IOException, PcapNativeException {
-        Objects.requireNonNull(hostname, "Should not provide null hostname");
-        PcapNetworkInterface pnIf = Pcaps.getDevByAddress(InetAddress.getByName(hostname));
-        if (pnIf == null) {
-            throw new IOException("Fail to get interface with provided hostname - " + hostname);
-        }
-        return networkInterfaceToString(pnIf);
-    }
 
     public static String listInterfaces() throws PcapNativeException {
 
@@ -35,42 +24,34 @@ public class NetworkUtils {
         return stringBuilder.toString();
     }
 
-    static String networkInterfaceToString(PcapNetworkInterface pcapNetworkInterface) {
+    private static String networkInterfaceToString(PcapNetworkInterface pcapNetworkInterface) {
+
         StringBuilder sb = new StringBuilder();
-        sb.append(pcapNetworkInterface.getName()).append(": ").append(pcapNetworkInterface.getDescription()).append("\n");
+        sb.append(String.format("%-10sLink encap: %s", pcapNetworkInterface.getName(), pcapNetworkInterface.isLoopBack() ? "Local loopback" : "Ethernet"));
+        if (!pcapNetworkInterface.getLinkLayerAddresses().isEmpty()) {
+            // only get the first one
+            LinkLayerAddress hwAddr = pcapNetworkInterface.getLinkLayerAddresses().get(0);
+            if (hwAddr != null) {
+                sb.append(String.format("  HWaddr %s", hwAddr.toString()));
+            }
+        }
+        sb.append("\n");
 
         List<PcapAddress> addresses = pcapNetworkInterface.getAddresses();
-        sb.append("\t").append(addresses.size()).append(" address(es):").append("\n");
-        for (int i = 0; i < addresses.size();  i++) {
-            PcapAddress address = addresses.get(i);
-            sb.append("\t -address    :").append(address.getAddress()).append("\n")
-                    .append("\t    broadcast  :").append(address.getBroadcastAddress()).append(" ")
-                    .append("\t destination:").append(address.getDestinationAddress()).append(" ")
-                    .append("\t netmask    :").append(address.getNetmask()).append("\n");
-        }
-        List<LinkLayerAddress> linkLayerAddresses = pcapNetworkInterface.getLinkLayerAddresses();
-        sb.append("\t").append(linkLayerAddresses.size()).append(" link layer address(es):").append("\n");
-        for (int i = 0; i < linkLayerAddresses.size(); i++) {
-            sb.append("\t ").append(linkLayerAddresses.get(i)).append(" ");
+        for (PcapAddress address : addresses) {
+            if (address instanceof PcapIpV4Address) {
+                sb.append(
+                        String.format("%10sinet addr:%s%s%s\n",
+                                "",
+                                address.getAddress().getHostAddress(),
+                                address.getBroadcastAddress() != null ? String.format(" Bcast:%s", address.getBroadcastAddress().getHostAddress()) : "",
+                                address.getNetmask() != null ? String.format(" Mask:%s", address.getNetmask().getHostAddress()) : ""));
+            }
+            else {
+                sb.append(String.format("%10sinet6 addr: %s\n", "", address.getAddress().getHostAddress()));
+            }
         }
 
         return sb.toString();
-    }
-
-
-    public static void main(String[] args) {
-        try {
-//            System.out.println(NetworkUtils.listInterfaces());
-            System.out.println(NetworkUtils.getInterfaceByRemoteHost("www.baidu.com"));
-        }
-        catch (PcapNativeException e) {
-            e.printStackTrace();
-        }
-        catch (UnknownHostException e) {
-            e.printStackTrace();
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 }
