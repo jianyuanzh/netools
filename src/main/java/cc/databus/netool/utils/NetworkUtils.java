@@ -2,15 +2,16 @@ package cc.databus.netool.utils;
 
 import org.pcap4j.core.*;
 import org.pcap4j.util.LinkLayerAddress;
-import org.pcap4j.util.MacAddress;
 
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Objects;
 
 public class NetworkUtils {
+
+    public static PcapNetworkInterface getNetworkInterfance(String name) throws PcapNativeException {
+        Objects.requireNonNull(name, "Interface name cannot be null.");
+        return Pcaps.getDevByName(name);
+    }
 
     public static String listInterfaces() throws PcapNativeException {
 
