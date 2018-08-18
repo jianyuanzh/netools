@@ -6,12 +6,14 @@ import cc.databus.netool.utils.SystemOutHelper;
 import org.apache.commons.cli.*;
 import org.pcap4j.core.NotOpenException;
 import org.pcap4j.core.PcapNativeException;
+import org.pcap4j.core.Pcaps;
 
 import java.io.IOException;
 
 import static cc.databus.netool.utils.SystemOutHelper.println;
 
 public class Main {
+
     public static void main(String[] args) throws ParseException, PcapNativeException, IOException, NotOpenException {
 
         Options options = new Options()
@@ -23,7 +25,8 @@ public class Main {
                 .addOption("c", true, "packet counts")
                 .addOption("s", true, "snap length")
                 .addOption("t", true, "packet reading timeout in milliseconds")
-                .addOption("G", true,"seconds to keep running");
+                .addOption("G", true,"seconds to keep running")
+                .addOption("v", false, "show version information");
 
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
@@ -31,6 +34,11 @@ public class Main {
         if (args.length == 0 || cmd.hasOption("h")) {
             HelpFormatter formatter = new HelpFormatter();
             formatter.printHelp( "netool", options );
+        }
+        else if (cmd.hasOption("v")) {
+            SystemOutHelper.init();
+            String libpcapVersion = Pcaps.libVersion();
+            println(libpcapVersion);
         }
         else if (cmd.hasOption("l")) {
             SystemOutHelper.init();
