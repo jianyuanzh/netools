@@ -2,12 +2,39 @@ package cc.databus.netool.utils;
 
 import java.io.File;
 
+/**
+ * options for capturing network packets.
+ */
 public class CaptureOptions {
-    private String filePath = "." + File.separator + "netools-dump.dump";
+    /**
+     * where to dump the captured packets
+     */
+    private String filePath = "";
+
     private int snapLen = 65536;
+
+    /**
+     * packet reading timeout in milliseconds
+     */
+    private int timeout = 10;
+
+    /**
+     * Interface name. If this is not specified, will choose the first one
+     */
     private String interfaceName = "";
-    private int duration = 0;
-    private long count = 0;
+
+    /**
+     * max capturing duration
+     */
+    private long duration = 0;
+
+    /**
+     * max captured packets count
+     */
+    private int count = 0;
+    /**
+     * filter
+     */
     private String filter = "";
 
     public String getFilePath() {
@@ -22,16 +49,20 @@ public class CaptureOptions {
         return interfaceName;
     }
 
-    public int getDuration() {
+    public long getDuration() {
         return duration;
     }
 
-    public long getCount() {
+    public int getCount() {
         return count;
     }
 
     public String getFilter() {
         return filter;
+    }
+
+    public int getTimeout() {
+        return timeout;
     }
 
     public static Builder newBuilder() {
@@ -50,16 +81,20 @@ public class CaptureOptions {
         this.interfaceName = interfaceName;
     }
 
-    private void setDuration(int duration) {
+    private void setDuration(long duration) {
         this.duration = duration;
     }
 
-    private void setCount(long count) {
+    private void setCount(int count) {
         this.count = count;
     }
 
     private void setFilter(String filter) {
         this.filter = filter;
+    }
+
+    private void setTimeout(int timeout) {
+        this.timeout = timeout;
     }
     public static class Builder {
 
@@ -81,7 +116,7 @@ public class CaptureOptions {
             return this;
         }
 
-        public Builder duration(int duration) {
+        public Builder duration(long duration) {
             inner.setDuration(duration);
             return this;
         }
@@ -95,6 +130,12 @@ public class CaptureOptions {
             inner.setFilter(filter);
             return this;
         }
+
+        public Builder timeout(int timeout) {
+            inner.setTimeout(timeout);
+            return this;
+        }
+
 
         public CaptureOptions build() {
             return inner;

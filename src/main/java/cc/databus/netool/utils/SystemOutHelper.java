@@ -20,7 +20,7 @@ public class SystemOutHelper {
     private SystemOutHelper() {
     }
 
-    public static void println(String l) {
+    public static void println(Object l) {
         originSystemOut.println(l);
     }
 

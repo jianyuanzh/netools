@@ -4,6 +4,7 @@ import cc.databus.netool.utils.CaptureOptions;
 import cc.databus.netool.utils.NetworkUtils;
 import cc.databus.netool.utils.SystemOutHelper;
 import org.apache.commons.cli.*;
+import org.pcap4j.core.NotOpenException;
 import org.pcap4j.core.PcapNativeException;
 
 import java.io.IOException;
@@ -11,21 +12,23 @@ import java.io.IOException;
 import static cc.databus.netool.utils.SystemOutHelper.println;
 
 public class Main {
-    public static void main(String[] args) throws ParseException, PcapNativeException, IOException {
+    public static void main(String[] args) throws ParseException, PcapNativeException, IOException, NotOpenException {
 
         Options options = new Options()
                 .addOption("h", false, "show usage")
                 .addOption("l", false, "list all interfaces")
                 .addOption("w", true, "file path to dump packets")
+                .addOption("f", true, "filter")
                 .addOption("i", true, "interface name")
                 .addOption("c", true, "packet counts")
                 .addOption("s", true, "snap length")
+                .addOption("t", true, "packet reading timeout in milliseconds")
                 .addOption("G", true,"seconds to keep running");
 
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
 
-        if (cmd.getArgs().length == 0 || cmd.hasOption("h")) {
+        if (args.length == 0 || cmd.hasOption("h")) {
             HelpFormatter formatter = new HelpFormatter();
             formatter.printHelp( "netool", options );
         }
@@ -34,8 +37,9 @@ public class Main {
             println(NetworkUtils.listInterfaces());
         }
         else {
+            SystemOutHelper.init();
             CaptureOptions captureOptions = parseCaptureOptions(cmd);
-            // TODO, handle parsed capture options.
+            NetworkUtils.capturePackets(captureOptions);
         }
     }
 
@@ -57,6 +61,14 @@ public class Main {
 
         if (cmd.hasOption("G")) {
             builder.duration(Integer.parseInt(cmd.getOptionValue("G", "0")));
+        }
+
+        if (cmd.hasOption("t")) {
+            builder.timeout(Integer.parseInt(cmd.getOptionValue("t", "10")));
+        }
+
+        if (cmd.hasOption("f")) {
+            builder.filter(cmd.getOptionValue("f", ""));
         }
 
         return builder.build();
