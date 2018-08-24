@@ -21,7 +21,7 @@ public class Main {
                 .addOption("l", false, "list all interfaces")
                 .addOption("w", true, "file path to dump packets")
                 .addOption("f", true, "filter")
-                .addOption(Option.builder("i").hasArg(true).desc("interface name").valueSeparator(',').build())
+                .addOption("i", true, "interface name")
                 .addOption("c", true, "packet counts")
                 .addOption("s", true, "snap length")
                 .addOption("t", true, "packet reading timeout in milliseconds")
