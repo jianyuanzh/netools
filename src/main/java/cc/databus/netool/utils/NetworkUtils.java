@@ -1,13 +1,10 @@
 package cc.databus.netool.utils;
 
 import org.pcap4j.core.*;
-import org.pcap4j.packet.Packet;
 import org.pcap4j.util.LinkLayerAddress;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicLong;
 
 public class NetworkUtils {
 
@@ -16,96 +13,8 @@ public class NetworkUtils {
         return Pcaps.getDevByName(name);
     }
 
-    public static void capturePackets(final CaptureOptions options) throws PcapNativeException, NotOpenException {
-        // 1. get interface
-        PcapNetworkInterface networkInterface = null;
-        if (StringUtils.isNllOrEmpty(options.getInterfaceName())) {
-            networkInterface = getFirstInterface();
-        }
-        else {
-            networkInterface = getNetworkInterfance(options.getInterfaceName());
-        }
-
-        // 2. get snapLenth
-        PcapHandle handle = networkInterface.openLive(options.getSnapLen(), PcapNetworkInterface.PromiscuousMode.PROMISCUOUS, options.getTimeout());
-        // 3. open dumper if needed
-        PcapDumper dumper = null;
-        if (!StringUtils.isNllOrEmpty(options.getFilePath())) {
-            dumper = handle.dumpOpen(options.getFilePath());
-        }
-
-        // 4. set filter if needed
-        if (!StringUtils.isNllOrEmpty(options.getFilter())) {
-            handle.setFilter(options.getFilter(), BpfProgram.BpfCompileMode.OPTIMIZE);
-        }
-
-        // 5. prepare listener
-        NetworkPacketListener listener = new NetworkPacketListener(dumper);
-
-        ExecutorService singleExecutor = Executors.newSingleThreadExecutor();
-        int count = options.getCount() > 0 ? options.getCount() : Integer.MAX_VALUE;
-        Future<Void> future = singleExecutor.submit(new CapturingTask(handle, listener, count, options.getDuration()));
-
-        try {
-            if (options.getDuration() > 0) {
-                try {
-                    future.get(options.getDuration(), TimeUnit.SECONDS);
-                }
-                catch (ExecutionException e) {
-                    Throwable cause = e.getCause();
-                    SystemOutHelper.println(String.format("Capturing failed with exception - %s:%s", cause.getClass().getCanonicalName(), cause.getMessage()));
-                }
-                catch (InterruptedException | TimeoutException e) {
-                    SystemOutHelper.println("Capturing timeout or interrupted.");
-                    future.cancel(true);
-                }
-                finally {
-                    handle.breakLoop();
-                }
-            }
-            else {
-                try {
-                    future.get();
-                }
-                catch (InterruptedException e) {
-                    SystemOutHelper.println("Capturing interrupted.");
-                    future.cancel(true);
-                }
-                catch (ExecutionException e) {
-                    Throwable cause = e.getCause();
-                    SystemOutHelper.println(String.format("Capturing failed with exception - %s:%s", cause.getClass().getCanonicalName(), cause.getMessage()));
-                }
-                finally {
-                    handle.breakLoop();
-                }
-            }
-        }
-        finally {
-
-            try {
-                singleExecutor.shutdownNow();
-            }
-            catch (Exception ignore) {
-            }
-
-            if (dumper != null) {
-                try {
-                    dumper.close();
-                    SystemOutHelper.println("Dumper closed!");
-                }
-                catch (Exception ignore) {
-                }
-            }
-
-            try {
-                handle.close();
-                SystemOutHelper.println("PcapHandle closed!");
-            }
-            catch (Exception ignore) {
-            }
-
-
-        }
+    public static void capturePackets(CaptureOptions captureOptions) throws PcapNativeException, NotOpenException {
+        NetworkCapture.startCapturing(captureOptions);
     }
 
     public static String listInterfaces() throws PcapNativeException {
@@ -120,7 +29,7 @@ public class NetworkUtils {
         return stringBuilder.toString();
     }
 
-    private static PcapNetworkInterface getFirstInterface() throws PcapNativeException {
+    public static PcapNetworkInterface getFirstInterface() throws PcapNativeException {
         List<PcapNetworkInterface> all = Pcaps.findAllDevs();
         if (!all.isEmpty()) {
             return all.get(0);
@@ -160,84 +69,5 @@ public class NetworkUtils {
         return sb.toString();
     }
 
-    private static class NetworkPacketListener implements PacketListener {
 
-        private final PcapDumper dumper;
-        private final AtomicLong count = new AtomicLong(0);
-
-        private NetworkPacketListener(PcapDumper dumper) {
-            this.dumper = dumper;
-        }
-
-        public long getCount() {
-            return count.get();
-        }
-
-        @Override
-        public void gotPacket(Packet packet) {
-
-            count.incrementAndGet();
-            boolean needPrint = true;
-            if (dumper != null) {
-                try {
-                    dumper.dump(packet);
-                    needPrint = false;
-                }
-                catch (NotOpenException e) {
-                    // ignore
-                }
-            }
-
-            if (needPrint) {
-                SystemOutHelper.println(packet);
-            }
-        }
-    }
-
-    private static class CapturingTask implements Callable<Void> {
-
-        private final PcapHandle handle;
-        private final NetworkPacketListener listener;
-        private final int count;
-        private final long durationInMs;
-
-
-        private CapturingTask(PcapHandle handle, NetworkPacketListener listener, int count, long durationInS) {
-            this.handle = handle;
-            this.listener = listener;
-            this.count = count;
-            this.durationInMs = durationInS * 1000;
-        }
-
-
-        @Override
-        public Void call() throws Exception {
-            long start = System.currentTimeMillis();
-            while (true) {
-                try {
-                    SystemOutHelper.println(String.format("Start loop, count=%d, duration=%dms", count, durationInMs));
-                    handle.loop(count, listener);
-                }
-                catch (InterruptedException e) {
-                    SystemOutHelper.println("Interrupted, captured " + listener.getCount() + " packets.");
-                    break;
-                }
-
-                if (count != Integer.MAX_VALUE) {
-                    SystemOutHelper.println("Reach count limit, captured " + listener.getCount() + " packets.");
-                    break;
-                }
-
-                if (durationInMs <= 0) {
-                    break;
-                }
-                else if (System.currentTimeMillis() >= System.currentTimeMillis() + durationInMs) {
-                    SystemOutHelper.println("Reach running time limit, captured " + listener.getCount() + " packets.");
-                    break;
-                }
-            }
-
-            return null;
-        }
-    }
 }

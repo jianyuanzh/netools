@@ -1,7 +1,7 @@
 package cc.databus.netool.utils;
 
 public class StringUtils {
-    public static boolean isNllOrEmpty(String str) {
+    public static boolean isNullOrEmpty(String str) {
         return str == null || str.isEmpty();
     }
 }

@@ -57,7 +57,7 @@ public class Main {
             builder.filePath(cmd.getOptionValue("w"));
         }
         if (cmd.hasOption("i")) {
-            builder.interfaceName(cmd.getOptionValue("i"));
+            builder.interfaceNames(cmd.getOptionValues("i"));
         }
         if (cmd.hasOption("c")) {
             builder.count(Integer.parseInt(cmd.getOptionValue("c", "0")));

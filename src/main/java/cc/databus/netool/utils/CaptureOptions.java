@@ -1,6 +1,9 @@
 package cc.databus.netool.utils;
 
-import java.io.File;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * options for capturing network packets.
@@ -19,12 +22,13 @@ public class CaptureOptions {
     private int timeout = 10;
 
     /**
-     * Interface name. If this is not specified, will choose the first one
+     * Interface names. If this is not empty, will choose the first one
      */
-    private String interfaceName = "";
+    private Set<String> interfaceNames = new HashSet<>();
+
 
     /**
-     * max capturing duration
+     * max capturing duration in seconds
      */
     private long duration = 0;
 
@@ -45,8 +49,8 @@ public class CaptureOptions {
         return snapLen;
     }
 
-    public String getInterfaceName() {
-        return interfaceName;
+    public Set<String> getInterfaceNames() {
+        return Collections.unmodifiableSet(interfaceNames);
     }
 
     public long getDuration() {
@@ -77,8 +81,8 @@ public class CaptureOptions {
         this.snapLen = snapLen;
     }
 
-    private void setInterfaceName(String interfaceName) {
-        this.interfaceName = interfaceName;
+    private void addInterfaceName(String interfaceName) {
+        this.interfaceNames.add(interfaceName);
     }
 
     private void setDuration(long duration) {
@@ -111,8 +115,8 @@ public class CaptureOptions {
             return this;
         }
 
-        public Builder interfaceName(String interfaceName) {
-            inner.setInterfaceName(interfaceName);
+        public Builder interfaceNames(final String[] interfaceNames) {
+            Arrays.stream(interfaceNames).forEach(inner::addInterfaceName);
             return this;
         }
 
