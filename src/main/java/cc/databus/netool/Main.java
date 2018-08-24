@@ -21,7 +21,7 @@ public class Main {
                 .addOption("l", false, "list all interfaces")
                 .addOption("w", true, "file path to dump packets")
                 .addOption("f", true, "filter")
-                .addOption("i", true, "interface name")
+                .addOption(Option.builder("i").hasArg(true).desc("interface name").valueSeparator(',').build())
                 .addOption("c", true, "packet counts")
                 .addOption("s", true, "snap length")
                 .addOption("t", true, "packet reading timeout in milliseconds")
@@ -57,7 +57,7 @@ public class Main {
             builder.filePath(cmd.getOptionValue("w"));
         }
         if (cmd.hasOption("i")) {
-            builder.interfaceName(cmd.getOptionValue("i"));
+            builder.interfaceNames(cmd.getOptionValues("i"));
         }
         if (cmd.hasOption("c")) {
             builder.count(Integer.parseInt(cmd.getOptionValue("c", "0")));
