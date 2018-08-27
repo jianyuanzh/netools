@@ -18,6 +18,7 @@ public class Main {
 
         Options options = new Options()
                 .addOption("h", false, "show usage")
+                .addOption("S", "silently", true, "only show stdout of netool")
                 .addOption("l", false, "list all interfaces")
                 .addOption("w", true, "file path to dump packets")
                 .addOption("f", true, "filter")
@@ -34,18 +35,20 @@ public class Main {
         if (args.length == 0 || cmd.hasOption("h")) {
             HelpFormatter formatter = new HelpFormatter();
             formatter.printHelp( "netool", options );
+            return;
         }
-        else if (cmd.hasOption("v")) {
-            SystemOutHelper.init();
+        boolean silient = Boolean.parseBoolean(cmd.getOptionValue("S", "true"));
+        if (silient) {
+            SystemOutHelper.redirectSystemOut();
+        }
+        if (cmd.hasOption("v")) {
             String libpcapVersion = Pcaps.libVersion();
             println(libpcapVersion);
         }
         else if (cmd.hasOption("l")) {
-            SystemOutHelper.init();
             println(NetworkUtils.listInterfaces());
         }
         else {
-            SystemOutHelper.init();
             CaptureOptions captureOptions = parseCaptureOptions(cmd);
             NetworkUtils.capturePackets(captureOptions);
         }

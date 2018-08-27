@@ -7,7 +7,7 @@ public class SystemOutHelper {
     private static final PrintStream originSystemOut = System.out;
     private static boolean initialized = false;
 
-    public static synchronized void init() {
+    public static synchronized void redirectSystemOut() {
         if (!initialized) {
             System.setOut(new DummyPrintStream());
         }
