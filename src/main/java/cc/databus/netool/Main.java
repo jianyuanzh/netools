@@ -34,7 +34,7 @@ public class Main {
 
         if (args.length == 0 || cmd.hasOption("h")) {
             HelpFormatter formatter = new HelpFormatter();
-            formatter.printHelp( "netools", options );
+            formatter.printHelp( "netools [optinos]", options );
             return;
         }
         boolean silient = Boolean.parseBoolean(cmd.getOptionValue("S", "true"));
